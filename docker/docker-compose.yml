@@ -9,11 +9,10 @@ services:
       - models:/models
       - uploads:/app/static/uploads
       - outputs:/app/static/outputs
+    env_file:
+      - ../.env
     environment:
       - MODEL_CACHE_DIR=/models
-      - WAN21_DIR=/models/Wan2.1
-      - CODEFORMER_DIR=/models/CodeFormer
-      - RIFE_DIR=/models/RIFE
       - NVIDIA_VISIBLE_DEVICES=all
     deploy:
       resources:

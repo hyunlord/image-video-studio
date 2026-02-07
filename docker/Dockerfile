@@ -30,6 +30,8 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY backend/ backend/
 COPY frontend/ frontend/
 COPY static/ static/
+COPY scripts/ scripts/
+RUN chmod +x scripts/setup.sh
 
 # Entrypoint
 COPY docker/entrypoint.sh /entrypoint.sh
