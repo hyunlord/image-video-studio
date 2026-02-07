@@ -103,6 +103,10 @@ async def generate_video(
         "--save_file", str(output_path),
     ]
 
+    # Memory optimization: keep T5 encoder on CPU to free VRAM
+    if params.offload_model:
+        cmd_args.append("--t5_cpu")
+
     logger.info(f"Starting generation: {' '.join(cmd_args)}")
 
     # Start subprocess
