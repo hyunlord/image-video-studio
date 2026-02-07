@@ -5,15 +5,6 @@ Wan 2.1 FLF2V(First-Last-Frame-to-Video) 모델 기반의 웹 비디오 생성 �
 
 ---
 
-## 프로젝트 소개
-
-- **Wan 2.1 FLF2V-14B** 기반 이미지-to-비디오 생성 웹 애플리케이션
-- **FastAPI** 비동기 백엔드 + **React 18** 프론트엔드 (CDN 로드, 별도 빌드 불필요)
-- CLIP 이미지 분석 + 프롬프트 분석을 통한 **자동 파라미터 최적화**
-- 후처리 파이프라인: **CodeFormer** 얼굴 복원, **Real-ESRGAN** 업스케일링, **RIFE** 프레임 보간
-
----
-
 ## 주요 기능
 
 - **다중 이미지 업로드** + 드래그앤드롭 순서 변경
@@ -22,101 +13,124 @@ Wan 2.1 FLF2V(First-Last-Frame-to-Video) 모델 기반의 웹 비디오 생성 �
 - **실시간 진행률 표시** -- WebSocket을 통한 단계별 상태 업데이트
 - **배치 처리** -- 여러 이미지 쌍을 순차 생성 후 하나의 영상으로 결합
 - **자동/수동 후처리 옵션** -- 얼굴 복원, 업스케일링, 프레임 보간을 개별 선택 가능
+- **GPU 모니터링** -- `/monitor`에서 VRAM/RAM 사용량 실시간 확인
 
 ---
 
-## 실행 환경
+## 실행 방법
 
-### Google Colab (권장)
+### 방법 A: Google Colab (무료/저비용)
 
-가장 간편한 실행 방법입니다. GPU 환경 설정이 자동으로 처리됩니다.
+빠른 테스트에 적합합니다. GPU 환경 설정이 자동으로 처리됩니다.
 
-1. `colab_launch.ipynb` 노트북을 Google Colab에서 엽니다.
-2. **런타임 > 런타임 유형 변경**에서 GPU(T4 이상)를 선택합니다.
-3. 셀을 순서대로 실행합니다.
-4. 출력된 ngrok URL로 접속합니다.
+**요구사항**
+- Google Colab T4 GPU (무료 티어) 이상
+- **High-RAM 런타임** 필수 (14B 모델 = ~28GB CPU RAM)
+  - 런타임 → 런타임 유형 변경 → High-RAM 선택
 
-### Docker (로컬/클라우드 GPU)
+**실행 절차**
+1. `colab_launch.ipynb`를 Google Colab에서 엽니다
+2. 셀을 순서대로 실행합니다 (코드 셀 3개)
+3. 출력된 ngrok URL을 클릭하여 접속합니다
 
-NVIDIA Container Toolkit이 설치된 환경에서 Docker로 실행할 수 있습니다.
+**T4 제약사항**
+| 항목 | 제한 |
+|------|------|
+| 해상도 | 480P (832x480) |
+| 최대 프레임 | 33 |
+| 최대 스텝 | 30 |
+| VRAM | 16GB |
+
+**선택사항: `.env` 파일**
+
+Colab 작업 디렉토리에 `.env` 파일을 업로드하면 자동 로드됩니다:
+```
+HF_TOKEN=hf_your_token_here
+NGROK_AUTH_TOKEN=your_ngrok_token
+```
+
+---
+
+### 방법 B: Docker Compose (GPU 클라우드)
+
+RunPod, Vast.ai, GCE 등에서 사용합니다. VSCode SSH 원격 개발을 지원합니다.
+
+**요구사항**
+- NVIDIA GPU 16GB+ VRAM (T4, L4, A10G, A100)
+- Docker + NVIDIA Container Toolkit
+- 디스크 ~50GB (모델 + 코드)
+
+**실행 절차**
 
 ```bash
 git clone https://github.com/hyunlord/image-video-studio.git
 cd image-video-studio
-docker compose -f docker/docker-compose.yml up --build
+cp .env.sample .env    # HF_TOKEN 설정
+cd docker
+docker compose up
 ```
+
+첫 실행 시 모델 다운로드 (~28GB, 10-15분 소요).
+이후 실행부터는 Docker 볼륨에 캐시되어 즉시 시작됩니다.
 
 브라우저에서 `http://localhost:8000`으로 접속합니다.
 
-### 직접 실행 (로컬 GPU)
+**VSCode 원격 개발**
+1. VSCode에서 "Remote - SSH" 확장 설치
+2. GPU 클라우드 인스턴스에 SSH 접속
+3. `image-video-studio` 디렉토리 열기
+4. `localhost:8000`으로 접속 (필요시 포트 포워딩)
 
-로컬 GPU 환경에서 직접 실행하려면 아래 절차를 따릅니다. 사전 요구사항 섹션의 모든 항목이 설치되어야 합니다.
+**Docker 모델 관리**
+
+모델은 Docker 볼륨(`models`)에 영구 저장됩니다:
+```bash
+docker compose down -v           # 전체 볼륨 삭제 (모델 포함)
+docker volume rm docker_models   # 모델만 삭제 (업로드/출력 유지)
+```
+
+---
+
+### 방법 C: 직접 실행 (로컬 GPU)
+
+로컬 GPU 환경에서 직접 실행하려면:
 
 ```bash
 git clone https://github.com/hyunlord/image-video-studio.git
 cd image-video-studio
 pip install -r requirements.txt
-# Wan 2.1 + 후처리 도구 설치가 필요합니다. 아래 "사전 요구사항" 참고.
+bash scripts/setup.sh --base-dir /path/to/models
 uvicorn backend.app:app --host 0.0.0.0 --port 8000
 ```
 
-브라우저에서 `http://localhost:8000`으로 접속합니다.
+`setup.sh`가 Wan 2.1, 모델 다운로드, 후처리 도구를 자동 설치합니다.
 
 ---
 
-## 사전 요구사항 (직접 실행 시)
+## GPU별 성능 가이드
 
-직접 실행 환경에서는 아래 항목을 수동으로 설치해야 합니다.
-
-| 항목 | 설명 |
-|------|------|
-| **Python** | 3.10 이상 |
-| **CUDA 지원 GPU** | 최소 14GB VRAM (T4 이상) |
-| **ffmpeg** | 영상 인코딩/결합에 사용 |
-| **git** | 외부 저장소 클론에 사용 |
-
-### 외부 모델 및 도구
-
-**Wan 2.1**
-
-```bash
-git clone https://github.com/Wan-Video/Wan2.1.git
-```
-
-**FLF2V-14B 모델 체크포인트**
-
-`huggingface_hub`를 통해 다운로드합니다. 상세 절차는 Wan 2.1 공식 저장소를 참고하세요.
-
-**CodeFormer** (얼굴 복원)
-
-```bash
-git clone https://github.com/sczhou/CodeFormer.git
-```
-
-**RIFE** (프레임 보간)
-
-```bash
-git clone https://github.com/hzwer/ECCV2022-RIFE.git
-```
-
-**Real-ESRGAN** (업스케일링)
-
-```bash
-pip install realesrgan
-```
+| GPU | VRAM | 최대 해상도 | 최대 프레임 | Offload | 비고 |
+|-----|------|-----------|------------|---------|------|
+| T4 | 16GB | 480P | 33 | Yes | Colab 무료 티어 |
+| L4 | 24GB | 720P | 49 | Yes | |
+| A10G | 24GB | 720P | 81 | Yes | |
+| A100 40GB | 40GB | 720P | 81 | No | |
+| A100 80GB | 80GB | 720P | 81 | No | |
 
 ---
 
 ## 환경 변수
 
-외부 도구 경로를 환경 변수로 지정할 수 있습니다. 설정하지 않으면 기본값이 사용됩니다.
+`.env.sample`을 참고하여 `.env` 파일을 생성합니다. `setup.sh`가 자동으로 설정하지만, 직접 지정도 가능합니다.
 
-| 변수 | 설명 | 기본값 |
-|------|------|--------|
-| `WAN21_DIR` | Wan 2.1 설치 경로 | `/content/Wan2.1` |
-| `CODEFORMER_DIR` | CodeFormer 설치 경로 | `/content/CodeFormer` |
-| `RIFE_DIR` | RIFE 설치 경로 | `/content/RIFE` |
-| `MODEL_CACHE_DIR` | 모델 체크포인트 경로 | `{WAN21_DIR}/ckpts/FLF2V-14B-720P` |
+| 변수 | 설명 | Colab 기본값 | Docker 기본값 |
+|------|------|-------------|--------------|
+| `HF_TOKEN` | Hugging Face 토큰 (모델 다운로드) | - | - |
+| `NGROK_AUTH_TOKEN` | ngrok 인증 토큰 (Colab용) | - | - |
+| `WAN21_DIR` | Wan 2.1 설치 경로 | `/content/Wan2.1` | `/models/Wan2.1` |
+| `CODEFORMER_DIR` | CodeFormer 설치 경로 | `/content/CodeFormer` | `/models/CodeFormer` |
+| `RIFE_DIR` | RIFE 설치 경로 | `/content/RIFE` | `/models/RIFE` |
+| `MODEL_CACHE_DIR` | 모델 체크포인트 경로 | `/content/Wan2.1/ckpts/FLF2V-14B-720P` | `/models/Wan2.1/ckpts/FLF2V-14B-720P` |
 
 ---
 
@@ -142,36 +156,25 @@ image-video-studio/
 │   │   ├── interpolator.py     # RIFE 프레임 보간
 │   │   └── concatenator.py     # ffmpeg 영상 결합
 │   └── utils/
-│       ├── gpu.py              # GPU 감지 및 프로필 매칭
+│       ├── gpu.py              # GPU 감지 및 모니터링
 │       ├── files.py            # 업로드/출력 파일 관리
 │       └── progress.py         # 진행률 추적 및 보고
 ├── frontend/
-│   └── index.html              # React 18 SPA (CDN 로드)
+│   ├── index.html              # React 18 SPA (CDN 로드)
+│   └── monitor.html            # GPU 모니터링 대시보드
 ├── docker/
 │   ├── Dockerfile
 │   ├── docker-compose.yml
 │   └── entrypoint.sh
+├── scripts/
+│   └── setup.sh                # 공통 설치 스크립트 (Colab/Docker 공용)
 ├── static/
 │   ├── uploads/                # 업로드 이미지 저장
 │   └── outputs/                # 생성 영상 출력
 ├── colab_launch.ipynb          # Google Colab 실행 노트북
+├── .env.sample                 # 환경변수 템플릿
 └── requirements.txt            # Python 의존성
 ```
-
----
-
-## GPU별 제한사항
-
-GPU VRAM에 따라 생성 가능한 최대 프레임 수와 해상도가 달라집니다.
-
-| GPU | VRAM | 최대 프레임 | 최대 해상도 | FP8 |
-|-----|------|------------|-----------|-----|
-| T4 | 16GB | 49 | 480P | 필수 |
-| L4 | 24GB | 49 | 720P | 권장 |
-| A100 40GB | 40GB | 81 | 720P | 불필요 |
-| A100 80GB | 80GB | 81 | 720P | 불필요 |
-
-> FP8 양자화를 사용하면 VRAM 사용량이 줄어들지만 화질이 소폭 저하될 수 있습니다.
 
 ---
 
