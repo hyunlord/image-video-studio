@@ -82,6 +82,17 @@ class JobQueue:
     def list_jobs(self) -> list[JobResponse]:
         return [info.to_response() for info in self._jobs.values()]
 
+    def get_active_job_info(self) -> dict | None:
+        """Return info about the currently running job, if any."""
+        for info in self._jobs.values():
+            if info.status in (JobStatus.PREPROCESSING, JobStatus.GENERATING, JobStatus.POSTPROCESSING):
+                return {
+                    "job_id": info.job_id,
+                    "status": info.status.value,
+                    "progress": info.progress,
+                }
+        return None
+
     def cancel_job(self, job_id: str) -> bool:
         info = self._jobs.get(job_id)
         if not info:

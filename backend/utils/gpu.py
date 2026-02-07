@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import subprocess
 
 from backend.config import DEFAULT_GPU_PROFILE, GPU_PROFILES
 
@@ -73,3 +74,67 @@ def get_vram_free_gb() -> float:
         return free / (1024 ** 3)
     except Exception:
         return 0.0
+
+
+def get_gpu_monitor_data() -> dict:
+    """Collect real-time GPU metrics."""
+    data = {
+        "vram_total_gb": 0.0,
+        "vram_used_gb": 0.0,
+        "vram_free_gb": 0.0,
+        "vram_usage_percent": 0.0,
+        "gpu_utilization_percent": 0.0,
+        "torch_allocated_gb": 0.0,
+        "torch_reserved_gb": 0.0,
+    }
+    try:
+        import torch
+
+        if not torch.cuda.is_available():
+            return data
+
+        free, total = torch.cuda.mem_get_info(0)
+        total_gb = total / (1024 ** 3)
+        free_gb = free / (1024 ** 3)
+        used_gb = total_gb - free_gb
+
+        data["vram_total_gb"] = round(total_gb, 2)
+        data["vram_free_gb"] = round(free_gb, 2)
+        data["vram_used_gb"] = round(used_gb, 2)
+        data["vram_usage_percent"] = round((used_gb / total_gb) * 100, 1) if total_gb > 0 else 0.0
+        data["torch_allocated_gb"] = round(torch.cuda.memory_allocated(0) / (1024 ** 3), 2)
+        data["torch_reserved_gb"] = round(torch.cuda.memory_reserved(0) / (1024 ** 3), 2)
+    except Exception:
+        pass
+
+    data["gpu_utilization_percent"] = _get_gpu_utilization()
+    return data
+
+
+def _get_gpu_utilization() -> float:
+    """Query GPU utilization % via nvidia-smi. Returns 0 on failure."""
+    try:
+        result = subprocess.run(
+            ["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"],
+            capture_output=True, text=True, timeout=2,
+        )
+        if result.returncode == 0:
+            return float(result.stdout.strip().split("\n")[0])
+    except Exception:
+        pass
+    return 0.0
+
+
+def get_system_ram() -> dict:
+    """Return system RAM metrics."""
+    try:
+        import psutil
+
+        mem = psutil.virtual_memory()
+        return {
+            "ram_total_gb": round(mem.total / (1024 ** 3), 2),
+            "ram_used_gb": round(mem.used / (1024 ** 3), 2),
+            "ram_usage_percent": round(mem.percent, 1),
+        }
+    except ImportError:
+        return {"ram_total_gb": 0.0, "ram_used_gb": 0.0, "ram_usage_percent": 0.0}

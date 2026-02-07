@@ -21,6 +21,7 @@ from backend.models import (
     JobRequest,
     JobResponse,
     SystemConfig,
+    SystemMonitor,
     VideoLength,
     VideoQuality,
 )
@@ -31,7 +32,7 @@ from backend.utils.files import (
     list_uploads,
     save_upload,
 )
-from backend.utils.gpu import detect_gpu_tier
+from backend.utils.gpu import detect_gpu_tier, get_gpu_monitor_data, get_system_ram
 from backend.ws_manager import ws_manager
 
 logging.basicConfig(
@@ -74,6 +75,14 @@ async def serve_frontend():
     if not index.exists():
         raise HTTPException(404, "Frontend not found")
     return HTMLResponse(index.read_text(encoding="utf-8"))
+
+
+@app.get("/monitor", response_class=HTMLResponse)
+async def serve_monitor():
+    page = FRONTEND_DIR / "monitor.html"
+    if not page.exists():
+        raise HTTPException(404, "Monitor page not found")
+    return HTMLResponse(page.read_text(encoding="utf-8"))
 
 
 # ── Image upload endpoints ───────────────────────────────────────────────────
@@ -183,6 +192,27 @@ async def get_system_config():
         safe_resolution=profile["safe_res"],
         available_lengths=lengths,
         available_qualities=qualities,
+    )
+
+
+@app.get("/api/system/monitor", response_model=SystemMonitor)
+async def get_system_monitor():
+    gpu_data = get_gpu_monitor_data()
+    ram_data = get_system_ram()
+    active = job_queue.get_active_job_info()
+
+    stage_labels = {
+        "preprocessing": "전처리 중",
+        "generating": "영상 생성 중",
+        "postprocessing": "후처리 중",
+    }
+
+    return SystemMonitor(
+        **gpu_data,
+        **ram_data,
+        active_job_id=active["job_id"] if active else None,
+        active_job_stage=stage_labels.get(active["status"], active["status"]) if active else "",
+        active_job_progress=active["progress"] if active else 0.0,
     )
 
 

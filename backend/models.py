@@ -107,6 +107,22 @@ class SystemConfig(BaseModel):
     available_qualities: list[str]
 
 
+class SystemMonitor(BaseModel):
+    vram_total_gb: float = 0.0
+    vram_used_gb: float = 0.0
+    vram_free_gb: float = 0.0
+    vram_usage_percent: float = 0.0
+    gpu_utilization_percent: float = 0.0
+    torch_allocated_gb: float = 0.0
+    torch_reserved_gb: float = 0.0
+    ram_total_gb: float = 0.0
+    ram_used_gb: float = 0.0
+    ram_usage_percent: float = 0.0
+    active_job_id: Optional[str] = None
+    active_job_stage: str = ""
+    active_job_progress: float = 0.0
+
+
 # ── Internal technical params (not exposed to frontend) ──────────────────────
 
 class TechnicalParams(BaseModel):

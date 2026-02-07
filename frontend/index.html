@@ -831,11 +831,14 @@
                         {/* Header */}
                         <div className="text-center space-y-2">
                             <h1 className="text-3xl md:text-4xl font-bold text-blue-400">🎬 Wan 2.1 Video Studio</h1>
-                            {systemConfig && (
-                                <div className="text-sm text-gray-400">
-                                    GPU: {systemConfig.gpu_name} ({systemConfig.vram_gb}GB VRAM)
-                                </div>
-                            )}
+                            <div className="flex items-center justify-center gap-3 text-sm text-gray-400">
+                                {systemConfig && (
+                                    <span>GPU: {systemConfig.gpu_name} ({systemConfig.vram_gb}GB VRAM)</span>
+                                )}
+                                <a href="/monitor" target="_blank" className="text-blue-400 hover:text-blue-300 underline">
+                                    GPU 모니터
+                                </a>
+                            </div>
                         </div>
 
                         {/* Image Upload & Reorder */}
