@@ -1,0 +1,30 @@
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - models:/models
+      - uploads:/app/static/uploads
+      - outputs:/app/static/outputs
+    environment:
+      - MODEL_CACHE_DIR=/models
+      - WAN21_DIR=/models/Wan2.1
+      - CODEFORMER_DIR=/models/CodeFormer
+      - RIFE_DIR=/models/RIFE
+      - NVIDIA_VISIBLE_DEVICES=all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+
+volumes:
+  models:
+  uploads:
+  outputs:
