@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import re
 from pathlib import Path
 from typing import Awaitable, Callable, Optional
@@ -109,13 +110,17 @@ async def generate_video(
 
     logger.info(f"Starting generation: {' '.join(cmd_args)}")
 
+    # Subprocess environment: reduce CUDA memory fragmentation
+    sub_env = {**os.environ, "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"}
+
     # Start subprocess
     try:
         process = await asyncio.create_subprocess_exec(
             *cmd_args,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            cwd=WAN21_DIR
+            cwd=WAN21_DIR,
+            env=sub_env,
         )
     except Exception as e:
         raise GenerationError(f"Failed to start generation process: {e}") from e

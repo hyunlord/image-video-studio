@@ -22,9 +22,10 @@ GPU_PROFILES = {
     "T4": {
         "offload": True,
         "fp8": True,
-        "max_frames": 49,
+        "max_frames": 33,
         "safe_res": "480P",
         "vram_gb": 16,
+        "sample_steps_cap": 30,
     },
     "L4": {
         "offload": True,

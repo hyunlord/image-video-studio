@@ -17,6 +17,31 @@ _clip_preprocess = None
 _clip_tokenizer = None
 
 
+def unload_clip():
+    """Free CLIP model from memory to reclaim GPU VRAM and CPU RAM."""
+    global _clip_model, _clip_preprocess, _clip_tokenizer
+    if _clip_model is None:
+        return
+
+    import gc
+
+    del _clip_model
+    _clip_model = None
+    _clip_preprocess = None
+    _clip_tokenizer = None
+
+    try:
+        import torch
+
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    except Exception:
+        pass
+
+    gc.collect()
+    logger.info("CLIP model unloaded")
+
+
 def _load_clip():
     global _clip_model, _clip_preprocess, _clip_tokenizer
     if _clip_model is not None:

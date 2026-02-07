@@ -81,6 +81,12 @@ def map_parameters(
     sample_steps += prompt_analysis.steps_delta
     sample_steps = max(20, min(100, sample_steps))
 
+    # GPU memory cap on steps
+    steps_cap = gpu_profile.get("sample_steps_cap")
+    if steps_cap and sample_steps > steps_cap:
+        logger.info("Capping steps %d → %d for %s", sample_steps, steps_cap, tier_name)
+        sample_steps = steps_cap
+
     # ── Resolution dimensions ────────────────────────────────────────────
     res_info = RESOLUTION_MAP[resolution]
 

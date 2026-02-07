@@ -176,7 +176,9 @@ async def get_system_config():
     tier_name, profile = detect_gpu_tier()
     max_frames = profile["max_frames"]
 
-    lengths = [VideoLength.SHORT.value, VideoLength.MEDIUM.value]
+    lengths = [VideoLength.SHORT.value]
+    if max_frames >= 49:
+        lengths.append(VideoLength.MEDIUM.value)
     if max_frames >= 81:
         lengths.append(VideoLength.LONG.value)
 

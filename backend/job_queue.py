@@ -195,8 +195,21 @@ class JobQueue:
             )
             await tracker.complete_stage()
 
-            # 2. Generate video
+            # 2. Generate video — free GPU/CPU memory first
             await tracker.start_stage("generating")
+            from backend.analyzers.image_analyzer import unload_clip
+            import gc
+
+            unload_clip()
+            try:
+                import torch
+
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+            except Exception:
+                pass
+            gc.collect()
+
             raw_video = pair_dir / "raw.mp4"
             await generate_video(
                 first_frame=first_frame,
