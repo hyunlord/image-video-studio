@@ -16,8 +16,6 @@ from typing import Callable, Optional
 import cv2
 import numpy as np
 
-from backend.config import OUTPUT_DIR
-
 logger = logging.getLogger(__name__)
 
 

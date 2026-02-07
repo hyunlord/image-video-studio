@@ -13,8 +13,6 @@ import tempfile
 from pathlib import Path
 from typing import Optional
 
-from backend.config import OUTPUT_DIR
-
 logger = logging.getLogger(__name__)
 
 

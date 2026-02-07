@@ -21,7 +21,6 @@ MODEL_CACHE_DIR = Path(os.getenv("MODEL_CACHE_DIR", "/content/Wan2.1/ckpts/FLF2V
 GPU_PROFILES = {
     "T4": {
         "offload": True,
-        "fp8": True,
         "max_frames": 33,
         "safe_res": "480P",
         "vram_gb": 16,
@@ -29,28 +28,24 @@ GPU_PROFILES = {
     },
     "L4": {
         "offload": True,
-        "fp8": True,
         "max_frames": 49,
         "safe_res": "720P",
         "vram_gb": 24,
     },
     "A10G": {
         "offload": True,
-        "fp8": False,
         "max_frames": 81,
         "safe_res": "720P",
         "vram_gb": 24,
     },
     "A100-40GB": {
         "offload": False,
-        "fp8": False,
         "max_frames": 81,
         "safe_res": "720P",
         "vram_gb": 40,
     },
     "A100-80GB": {
         "offload": False,
-        "fp8": False,
         "max_frames": 81,
         "safe_res": "720P",
         "vram_gb": 80,
@@ -60,7 +55,6 @@ GPU_PROFILES = {
 # Fallback for unknown GPUs
 DEFAULT_GPU_PROFILE = {
     "offload": True,
-    "fp8": True,
     "max_frames": 33,
     "safe_res": "480P",
     "vram_gb": 8,
@@ -80,5 +74,4 @@ RESOLUTION_MAP = {
 
 # ── Upload limits ────────────────────────────────────────────────────────────
 MAX_UPLOAD_SIZE_MB = 20
-MAX_IMAGES_PER_SESSION = 20
 ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}

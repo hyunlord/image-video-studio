@@ -60,7 +60,6 @@ def map_parameters(
         frame_num = max_frames
 
     offload = gpu_profile["offload"]
-    fp8 = gpu_profile["fp8"]
 
     # ── Image analysis adjustments ───────────────────────────────────────
     # Low similarity → more steps for smoother transition
@@ -121,7 +120,6 @@ def map_parameters(
         sample_steps=sample_steps,
         seed=seed,
         offload_model=offload,
-        use_fp8=fp8,
         apply_codeformer=apply_codeformer,
         codeformer_fidelity=fidelity,
         apply_upscale=apply_upscale,

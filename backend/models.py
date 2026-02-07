@@ -46,11 +46,6 @@ class JobStatus(str, Enum):
 
 # ── Request / Response models ────────────────────────────────────────────────
 
-class ImagePair(BaseModel):
-    first_image_id: str
-    last_image_id: str
-
-
 class PostProcessOptions(BaseModel):
     face_restore: Optional[bool] = None   # None = auto
     upscale: Optional[bool] = None        # None = auto
@@ -134,7 +129,6 @@ class TechnicalParams(BaseModel):
     sample_steps: int = 50
     seed: int = 42
     offload_model: bool = True
-    use_fp8: bool = True
     # post-processing flags
     apply_codeformer: bool = False
     codeformer_fidelity: float = 0.7

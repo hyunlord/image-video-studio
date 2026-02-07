@@ -82,10 +82,6 @@ def create_job_dir(job_id: str) -> Path:
     """Create and return a working directory for a job."""
     job_dir = OUTPUT_DIR / job_id
     job_dir.mkdir(parents=True, exist_ok=True)
-    (job_dir / "frames").mkdir(exist_ok=True)
-    (job_dir / "restored").mkdir(exist_ok=True)
-    (job_dir / "upscaled").mkdir(exist_ok=True)
-    (job_dir / "interpolated").mkdir(exist_ok=True)
     return job_dir
 
 
