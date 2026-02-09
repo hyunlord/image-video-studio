@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 
 LENGTH_TO_FRAMES = {
     VideoLength.SHORT: 33,
-    VideoLength.MEDIUM: 49,
-    VideoLength.LONG: 81,
+    VideoLength.MEDIUM: 65,
+    VideoLength.LONG: 129,
 }
 
 QUALITY_TO_RES = {
@@ -32,9 +32,9 @@ QUALITY_TO_RES = {
 }
 
 INTENSITY_TO_SCALE = {
-    TransitionIntensity.GENTLE: 3.5,
-    TransitionIntensity.NORMAL: 5.0,
-    TransitionIntensity.DYNAMIC: 7.0,
+    TransitionIntensity.GENTLE: 5.0,
+    TransitionIntensity.NORMAL: 10.0,
+    TransitionIntensity.DYNAMIC: 15.0,
 }
 
 
@@ -64,21 +64,21 @@ def map_parameters(
     # ── Image analysis adjustments ───────────────────────────────────────
     # Low similarity → more steps for smoother transition
     if image_analysis.clip_similarity < 0.5:
-        steps_boost = int((0.5 - image_analysis.clip_similarity) * 100)
-        sample_steps = min(sample_steps + steps_boost, 100)
+        steps_boost = int((0.5 - image_analysis.clip_similarity) * 50)
+        sample_steps = min(sample_steps + steps_boost, 50)
         logger.info("Low similarity (%.2f) → steps boosted to %d",
                      image_analysis.clip_similarity, sample_steps)
     elif image_analysis.clip_similarity > 0.8:
-        sample_steps = max(sample_steps - 10, 30)
+        sample_steps = max(sample_steps - 5, 15)
         logger.info("High similarity (%.2f) → steps reduced to %d",
                      image_analysis.clip_similarity, sample_steps)
 
     # ── Prompt analysis adjustments ──────────────────────────────────────
     guidance_scale += prompt_analysis.guidance_delta
-    guidance_scale = max(1.0, min(10.0, guidance_scale))
+    guidance_scale = max(1.0, min(20.0, guidance_scale))
 
     sample_steps += prompt_analysis.steps_delta
-    sample_steps = max(20, min(100, sample_steps))
+    sample_steps = max(10, min(50, sample_steps))
 
     # GPU memory cap on steps
     steps_cap = gpu_profile.get("sample_steps_cap")

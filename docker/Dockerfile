@@ -2,7 +2,7 @@ FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
-ENV MODEL_CACHE_DIR=/models
+ENV FRAMEPACK_DIR=/models/FramePack
 
 # System dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \

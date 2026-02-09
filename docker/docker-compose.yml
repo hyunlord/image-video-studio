@@ -12,7 +12,7 @@ services:
     env_file:
       - ../.env
     environment:
-      - MODEL_CACHE_DIR=/models
+      - FRAMEPACK_DIR=/models/FramePack
       - NVIDIA_VISIBLE_DEVICES=all
     deploy:
       resources:

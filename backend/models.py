@@ -121,12 +121,12 @@ class SystemMonitor(BaseModel):
 # ── Internal technical params (not exposed to frontend) ──────────────────────
 
 class TechnicalParams(BaseModel):
-    frame_num: int = 49
-    resolution: str = "480P"
-    width: int = 854
-    height: int = 480
-    guidance_scale: float = 5.0
-    sample_steps: int = 50
+    frame_num: int = 65
+    resolution: str = "720P"
+    width: int = 1280
+    height: int = 720
+    guidance_scale: float = 10.0
+    sample_steps: int = 25
     seed: int = 42
     offload_model: bool = True
     # post-processing flags

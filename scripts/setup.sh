@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================================
-# Wan 2.1 Video Studio - Common Setup Script
+# FramePack Video Studio - Common Setup Script
 # Usage:
 #   bash scripts/setup.sh --base-dir /content          # Colab
 #   source scripts/setup.sh --base-dir /models          # Docker (source to export env vars)
@@ -20,27 +20,24 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-WAN21_DIR="${BASE_DIR}/Wan2.1"
+FRAMEPACK_DIR="${BASE_DIR}/FramePack"
 CODEFORMER_DIR="${BASE_DIR}/CodeFormer"
 RIFE_DIR="${BASE_DIR}/RIFE"
-CKPT_DIR="${WAN21_DIR}/ckpts/FLF2V-14B-720P"
 
 echo "============================================"
-echo "  Wan 2.1 Video Studio - Setup"
+echo "  FramePack Video Studio - Setup"
 echo "  Base directory: ${BASE_DIR}"
 echo "============================================"
 
-# ── 1. Wan 2.1 ───────────────────────────────────────────────────────────────
+# ── 1. FramePack ──────────────────────────────────────────────────────────────
 
-if [ ! -d "${WAN21_DIR}/.git" ]; then
-    echo "[1/5] Cloning Wan 2.1..."
-    git clone --depth 1 https://github.com/Wan-Video/Wan2.1.git "${WAN21_DIR}"
-    pip install --no-cache-dir -r "${WAN21_DIR}/requirements.txt"
-    # Wan 2.1 requirements downgrades numpy; fix compatibility
-    pip install --no-cache-dir "numpy>=2.0" --force-reinstall -q
-    echo "  -> Wan 2.1 installed"
+if [ ! -d "${FRAMEPACK_DIR}/.git" ]; then
+    echo "[1/5] Cloning FramePack..."
+    git clone --depth 1 https://github.com/lllyasviel/FramePack.git "${FRAMEPACK_DIR}"
+    pip install --no-cache-dir -r "${FRAMEPACK_DIR}/requirements_fp.txt"
+    echo "  -> FramePack installed"
 else
-    echo "[1/5] Wan 2.1 already cached"
+    echo "[1/5] FramePack already cached"
 fi
 
 # ── 2. FlashAttention compatibility check ────────────────────────────────────
@@ -63,24 +60,39 @@ else:
     print('No CUDA GPU detected - skipping FlashAttention check')
 "
 
-# ── 3. FLF2V-14B model download ─────────────────────────────────────────────
+# ── 3. FramePack model pre-download ──────────────────────────────────────────
 
 if [ "$SKIP_MODEL" = true ]; then
     echo "[3/5] Skipping model download (--skip-model)"
-elif [ -d "${CKPT_DIR}" ] && [ -n "$(ls -A "${CKPT_DIR}" 2>/dev/null)" ]; then
-    echo "[3/5] FLF2V-14B model already cached"
 else
-    echo "[3/5] Downloading FLF2V-14B model (~28GB)..."
+    echo "[3/5] Pre-downloading FramePack models (~20GB)..."
     python3 -c "
 from huggingface_hub import snapshot_download
 import os
 token = os.environ.get('HF_TOKEN') or None
+
+# Main transformer
 snapshot_download(
-    repo_id='Wan-AI/Wan2.1-FLF2V-14B-720P',
-    local_dir='${CKPT_DIR}',
+    repo_id='lllyasviel/FramePackI2V_HY',
     token=token,
 )
-print('  -> Model download complete')
+print('  -> FramePack transformer downloaded')
+
+# HunyuanVideo base (text encoders, VAE, tokenizers)
+snapshot_download(
+    repo_id='hunyuanvideo-community/HunyuanVideo',
+    allow_patterns=['text_encoder/*', 'text_encoder_2/*', 'tokenizer/*', 'tokenizer_2/*', 'vae/*'],
+    token=token,
+)
+print('  -> HunyuanVideo text encoders & VAE downloaded')
+
+# Vision encoder (flux redux)
+snapshot_download(
+    repo_id='lllyasviel/flux_redux_bfl',
+    allow_patterns=['feature_extractor/*', 'image_encoder/*'],
+    token=token,
+)
+print('  -> Vision encoder downloaded')
 "
 fi
 
@@ -111,16 +123,14 @@ fi
 
 # ── Export environment variables ─────────────────────────────────────────────
 
-export WAN21_DIR="${WAN21_DIR}"
+export FRAMEPACK_DIR="${FRAMEPACK_DIR}"
 export CODEFORMER_DIR="${CODEFORMER_DIR}"
 export RIFE_DIR="${RIFE_DIR}"
-export MODEL_CACHE_DIR="${CKPT_DIR}"
 
 echo ""
 echo "============================================"
 echo "  Setup complete!"
-echo "  WAN21_DIR=${WAN21_DIR}"
-echo "  MODEL_CACHE_DIR=${CKPT_DIR}"
+echo "  FRAMEPACK_DIR=${FRAMEPACK_DIR}"
 echo "  CODEFORMER_DIR=${CODEFORMER_DIR}"
 echo "  RIFE_DIR=${RIFE_DIR}"
 echo "============================================"

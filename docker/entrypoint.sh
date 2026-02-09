@@ -1,10 +1,11 @@
 #!/bin/bash
 set -e
 
-MODEL_DIR="${MODEL_CACHE_DIR:-/models}"
+MODEL_DIR="${FRAMEPACK_DIR:-/models/FramePack}"
+MODEL_DIR="$(dirname "${MODEL_DIR}")"
 
 echo "============================================"
-echo "  Wan 2.1 Video Studio - Docker Entrypoint"
+echo "  FramePack Video Studio - Docker Entrypoint"
 echo "============================================"
 
 # ── Run common setup (clone repos, download models, check FlashAttention) ────

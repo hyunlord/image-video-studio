@@ -1,7 +1,10 @@
-# Wan 2.1 Video Studio
+# FramePack Video Studio
 
-Wan 2.1 FLF2V(First-Last-Frame-to-Video) 모델 기반의 웹 비디오 생성 스튜디오입니다.
+FramePack 기반의 웹 비디오 생성 스튜디오입니다.
 이미지 쌍을 입력하면 두 이미지 사이의 전환 영상을 생성하고, 자동 후처리까지 수행합니다.
+
+FramePack은 HunyuanVideo 13B 트랜스포머를 next-frame prediction 방식으로 실행하여
+**VRAM 6GB만으로** 길이에 무관하게 일정한 메모리 사용량을 유지합니다.
 
 ---
 
@@ -25,21 +28,12 @@ Wan 2.1 FLF2V(First-Last-Frame-to-Video) 모델 기반의 웹 비디오 생성 �
 
 **요구사항**
 - Google Colab T4 GPU (무료 티어) 이상
-- **High-RAM 런타임** 필수 (14B 모델 = ~28GB CPU RAM)
-  - 런타임 → 런타임 유형 변경 → High-RAM 선택
+- VRAM 6GB 이상이면 동작 (T4 16GB 쾌적)
 
 **실행 절차**
 1. `colab_launch.ipynb`를 Google Colab에서 엽니다
-2. 셀을 순서대로 실행합니다 (코드 셀 3개)
+2. 셀을 순서대로 실행합니다 (코드 셀 4개)
 3. 출력된 ngrok URL을 클릭하여 접속합니다
-
-**T4 제약사항**
-| 항목 | 제한 |
-|------|------|
-| 해상도 | 480P (832x480) |
-| 최대 프레임 | 33 |
-| 최대 스텝 | 30 |
-| VRAM | 16GB |
 
 **선택사항: `.env` 파일**
 
@@ -56,9 +50,9 @@ NGROK_AUTH_TOKEN=your_ngrok_token
 RunPod, Vast.ai, GCE 등에서 사용합니다. VSCode SSH 원격 개발을 지원합니다.
 
 **요구사항**
-- NVIDIA GPU 16GB+ VRAM (T4, L4, A10G, A100)
+- NVIDIA GPU 6GB+ VRAM (T4, L4, A10G, A100)
 - Docker + NVIDIA Container Toolkit
-- 디스크 ~50GB (모델 + 코드)
+- 디스크 ~30GB (모델 + 코드)
 
 **실행 절차**
 
@@ -70,7 +64,7 @@ cd docker
 docker compose up
 ```
 
-첫 실행 시 모델 다운로드 (~28GB, 10-15분 소요).
+첫 실행 시 모델 다운로드 (~20GB, 10-15분 소요).
 이후 실행부터는 Docker 볼륨에 캐시되어 즉시 시작됩니다.
 
 브라우저에서 `http://localhost:8000`으로 접속합니다.
@@ -103,19 +97,21 @@ bash scripts/setup.sh --base-dir /path/to/models
 uvicorn backend.app:app --host 0.0.0.0 --port 8000
 ```
 
-`setup.sh`가 Wan 2.1, 모델 다운로드, 후처리 도구를 자동 설치합니다.
+`setup.sh`가 FramePack, 모델 다운로드, 후처리 도구를 자동 설치합니다.
 
 ---
 
 ## GPU별 성능 가이드
 
-| GPU | VRAM | 최대 해상도 | 최대 프레임 | Offload | 비고 |
-|-----|------|-----------|------------|---------|------|
-| T4 | 16GB | 480P | 33 | Yes | Colab 무료 티어 |
-| L4 | 24GB | 720P | 49 | Yes | |
-| A10G | 24GB | 720P | 81 | Yes | |
-| A100 40GB | 40GB | 720P | 81 | No | |
-| A100 80GB | 80GB | 720P | 81 | No | |
+| GPU | VRAM | 모드 | 최대 프레임 | 비고 |
+|-----|------|------|-----------|------|
+| T4 | 16GB | DynamicSwap | 129 | Colab 무료 티어 |
+| L4 | 24GB | High VRAM | 129 | |
+| A10G | 24GB | High VRAM | 129 | |
+| A100 | 40/80GB | High VRAM | 129 | |
+
+FramePack은 VRAM 사용량이 프레임 수에 무관하게 일정합니다 (~6GB).
+20GB 이상 VRAM에서는 High VRAM 모드로 자동 전환되어 속도가 향상됩니다.
 
 ---
 
@@ -127,10 +123,9 @@ uvicorn backend.app:app --host 0.0.0.0 --port 8000
 |------|------|-------------|--------------|
 | `HF_TOKEN` | Hugging Face 토큰 (모델 다운로드) | - | - |
 | `NGROK_AUTH_TOKEN` | ngrok 인증 토큰 (Colab용) | - | - |
-| `WAN21_DIR` | Wan 2.1 설치 경로 | `/content/Wan2.1` | `/models/Wan2.1` |
+| `FRAMEPACK_DIR` | FramePack 설치 경로 | `/content/FramePack` | `/models/FramePack` |
 | `CODEFORMER_DIR` | CodeFormer 설치 경로 | `/content/CodeFormer` | `/models/CodeFormer` |
 | `RIFE_DIR` | RIFE 설치 경로 | `/content/RIFE` | `/models/RIFE` |
-| `MODEL_CACHE_DIR` | 모델 체크포인트 경로 | `/content/Wan2.1/ckpts/FLF2V-14B-720P` | `/models/Wan2.1/ckpts/FLF2V-14B-720P` |
 
 ---
 
@@ -150,7 +145,7 @@ image-video-studio/
 │   │   └── prompt_analyzer.py  # 프롬프트 분석 + 한영 번역
 │   ├── pipeline/
 │   │   ├── preprocessor.py     # 이미지 전처리 (리사이즈, 정규화)
-│   │   ├── generator.py        # Wan 2.1 FLF2V 영상 생성
+│   │   ├── generator.py        # FramePack 영상 생성 (Python API)
 │   │   ├── face_restore.py     # CodeFormer 얼굴 복원
 │   │   ├── upscaler.py         # Real-ESRGAN 업스케일링
 │   │   ├── interpolator.py     # RIFE 프레임 보간
@@ -182,11 +177,11 @@ image-video-studio/
 
 | 기술 | 용도 |
 |------|------|
-| [Wan 2.1](https://github.com/Wan-Video/Wan2.1) (Alibaba) | Flow Matching + DiT 기반 영상 생성 |
+| [FramePack](https://github.com/lllyasviel/FramePack) (lllyasviel) | Next-frame prediction 기반 영상 생성 (VRAM 6GB) |
 | [OpenCLIP](https://github.com/mlfoundations/open_clip) | 이미지 유사도 측정 및 분석 |
 | [CodeFormer](https://github.com/sczhou/CodeFormer) | 얼굴 복원 |
 | [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) | 영상 업스케일링 |
-| [RIFE](https://github.com/hzwer/ECCV2022-RIFE) | 프레임 보간 (24fps -> 48fps) |
+| [RIFE](https://github.com/hzwer/ECCV2022-RIFE) | 프레임 보간 (30fps -> 60fps) |
 | [FastAPI](https://fastapi.tiangolo.com/) + WebSocket | 비동기 백엔드 서버 |
 | [React 18](https://react.dev/) + [Tailwind CSS](https://tailwindcss.com/) | 프론트엔드 UI |
 

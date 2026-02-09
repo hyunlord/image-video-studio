@@ -1,5 +1,5 @@
 """
-Image preprocessing module for Wan 2.1 FLF2V pipeline.
+Image preprocessing module for FramePack FLF2V pipeline.
 
 Provides letterbox resizing with aspect ratio preservation and black padding
 to prepare image pairs for video generation.

@@ -12,41 +12,40 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # ── External tool paths (overridable via env) ────────────────────────────────
-WAN21_DIR = Path(os.getenv("WAN21_DIR", "/content/Wan2.1"))
+FRAMEPACK_DIR = Path(os.getenv("FRAMEPACK_DIR", "/content/FramePack"))
+FRAMEPACK_MODEL_ID = os.getenv("FRAMEPACK_MODEL_ID", "lllyasviel/FramePackI2V_HY")
 CODEFORMER_DIR = Path(os.getenv("CODEFORMER_DIR", "/content/CodeFormer"))
 RIFE_DIR = Path(os.getenv("RIFE_DIR", "/content/RIFE"))
-MODEL_CACHE_DIR = Path(os.getenv("MODEL_CACHE_DIR", "/content/Wan2.1/ckpts/FLF2V-14B-720P"))
 
-# ── GPU Profiles ─────────────────────────────────────────────────────────────
+# ── GPU Profiles (FramePack: VRAM-independent frame count) ───────────────────
 GPU_PROFILES = {
     "T4": {
         "offload": True,
-        "max_frames": 33,
-        "safe_res": "480P",
+        "max_frames": 129,
+        "safe_res": "720P",
         "vram_gb": 16,
-        "sample_steps_cap": 30,
     },
     "L4": {
-        "offload": True,
-        "max_frames": 49,
+        "offload": False,
+        "max_frames": 129,
         "safe_res": "720P",
         "vram_gb": 24,
     },
     "A10G": {
-        "offload": True,
-        "max_frames": 81,
+        "offload": False,
+        "max_frames": 129,
         "safe_res": "720P",
         "vram_gb": 24,
     },
     "A100-40GB": {
         "offload": False,
-        "max_frames": 81,
+        "max_frames": 129,
         "safe_res": "720P",
         "vram_gb": 40,
     },
     "A100-80GB": {
         "offload": False,
-        "max_frames": 81,
+        "max_frames": 129,
         "safe_res": "720P",
         "vram_gb": 80,
     },
@@ -55,16 +54,16 @@ GPU_PROFILES = {
 # Fallback for unknown GPUs
 DEFAULT_GPU_PROFILE = {
     "offload": True,
-    "max_frames": 33,
+    "max_frames": 65,
     "safe_res": "480P",
     "vram_gb": 8,
 }
 
 # ── Generation defaults ──────────────────────────────────────────────────────
 DEFAULT_SEED = 42
-DEFAULT_SAMPLE_STEPS = 50
-DEFAULT_FPS = 24
-INTERPOLATED_FPS = 48
+DEFAULT_SAMPLE_STEPS = 25
+DEFAULT_FPS = 30
+INTERPOLATED_FPS = 60
 
 # ── Resolution map ───────────────────────────────────────────────────────────
 RESOLUTION_MAP = {

@@ -65,7 +65,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Wan 2.1 Video Studio",
+    title="FramePack Video Studio",
     version="0.1.0",
     lifespan=lifespan,
 )
