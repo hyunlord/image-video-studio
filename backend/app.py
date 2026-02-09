@@ -42,6 +42,19 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+class _QuietMonitorFilter(logging.Filter):
+    """Suppress access log noise from /api/system/monitor polling."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        msg = record.getMessage()
+        if "/api/system/monitor" in msg or "/api/system/health" in msg:
+            return False
+        return True
+
+
+logging.getLogger("uvicorn.access").addFilter(_QuietMonitorFilter())
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await job_queue.start()
